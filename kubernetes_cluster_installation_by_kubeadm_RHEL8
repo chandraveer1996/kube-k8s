@@ -1,0 +1,173 @@
+                                                        Kubernetes Cluster installation using kubeadm on RHEL8
+On Master and Worker:    [ sudo user ]
+Install, Enable and start docker service. Use the Docker repository to install docker.
+
+yum install -y -q yum-utils device-mapper-persistent-data lvm2 > /dev/null 2>&1
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo > /dev/null 2>&1
+yum install -y -q docker-ce >/dev/null 2>&1
+
+Start Docker services
+
+systemctl enable docker
+systemctl start docker
+
+Disable SELinux
+
+setenforce 0
+sed -i --follow-symlinks 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux
+
+Disable Firewall
+
+systemctl disable firewalld
+systemctl stop firewalld
+
+Disable swap
+
+sed -i '/swap/d' /etc/fstab
+swapoff -a
+
+Update sysctl settings for Kubernetes networking
+
+cat >> /etc/sysctl.d/kubernetes.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+sysctl --system
+
+cd /etc/sysctl.d/
+
+cat > 99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+
+ systemctl  --system
+ 
+ rm /etc/containerd/config.toml
+systemctl restart containerd
+kubeadm init
+
+
+Kubernetes Setup
+Adding yum repository for kubernetes packages 
+
+cat >>/etc/yum.repos.d/kubernetes.repo<<EOF
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+
+
+
+yum install -y kubeadm kubelet kubectl
+
+
+systemctl enable kubelet
+systemctl start kubelet
+
+
+rm /etc/containerd/config.toml
+systemctl restart containerd
+kubeadm init
+
+now come to normal user
+
+
+On Master Node:
+
+Initialize Kubernetes Cluster
+
+
+kubeadm init --apiserver-advertise-address=<MasterServerIP> --pod-network-cidr=192.168.0.0/16
+
+
+useradd kubeadmin 
+mkdir /home/kubeadmin/.kube
+cp /etc/kubernetes/admin.conf /home/kubeadmin/.kube/config
+chown -R kubeadmin:kubeadmin /home/kubeadmin/.kube
+
+
+Deploy Calico network as a kubeadmin user.
+
+
+sudo su - kubeadmin 
+curl https://docs.projectcalico.org/manifests/calico-typha.yaml -o calico.yaml
+kubectl apply -f calico.yaml
+
+
+kubeadm token create --print-join-command
+
+
+on worker nodes copy the token command
+
+then  verifying the cluster to get nodes status
+
+kubectl get nodes
+
+
+
+
+
+
+========================================================================================================================================================================
+
+
+
+Kubernetes is a container orchestration system that manages containers at scale
+
+Kubeadm automates the installation and configuration of Kubernetes components such as the API server, Controller Manager
+
+    One Control Plane node
+
+The control plane node (a node in Kubernetes refers to a server) is responsible for managing the state of the cluster. 
+
+    Two worker nodes
+
+Worker nodes are the servers where your workloads (i.e. containerized applications and services) will run. A worker will continue to run your workload once they’re assigned to it, even if the control plane goes down once scheduling is complete. A cluster’s capacity can be increased by adding workers.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+

@@ -1,0 +1,97 @@
+setting up kubernetes cluster on aws ec2 instance using KOPS
+
+
+
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" [ to configure aws-cli]
+sudo yum install zip
+sudo yum install unzip
+unzip awscliv2.zip
+sudo ./aws/install
+aws --version
+aws configure
+sudo yum update -y
+ curl -o kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.21.2/2021-07-05/bin/linux/amd64/kubectl [ now we will have to install kubectl and kops]
+chmod +x ./kubectl [to give execute permission]
+mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin [ now copy the binary to a folder in our path. creating a $HOME/bin/kubectl and ensureing that /home/bin comes in our path first]
+echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc [ now adding the $HOME/bin to our shell initiazation file so that it is configured when we open a shell]
+kubectl version --short --client [to check the version]
+yum install wget
+wget https://github.com/kubernetes/kops/releases/download/1.10.0/kops-linux-amd64  [ downloading the kops ]
+chmod +x kops-linux-amd64
+sudo mv kops-linux-amd64 /usr/local/bin/kops
+aws s3 ls [ to check the s3 bucket]
+aws s3 mb s3://a2b2c2d3-kops-state-store --region us-east-1 [ creating a bucket a2b2c2d3-kops-state-store]
+aws s3 ls [ checking that bucket is created]
+aws s3api put-bucket-versioning --bucket a2b2c2d3-kops-state-store --versioning-configuration Status=Enabled [ now we will enable versioning to revert or recover a  previous stae store]
+export KOPS_STATE_STORE=s3://a2b2c2d3-kops-state-store [ setting the environmental variable]
+kops create cluster --node-count=2 --node-size=t2.micro --zones=us-east-1a --name=abcd2.k8s.local [ now we are creating the cluster giving name now cluster is created]	
+kops get cluster [ to check the cluster is created or not]
+kops update cluster abcd2.k8s.local --yes [ now updating the cluster or to check any modifications]	
+ls -l
+ls -la
+cd .aws/
+ls -l
+cat config
+cd ..
+cd ~/.ssh/
+ ls -l
+ cat authorized_keys
+ vi id_rsa.pub  [copy key from authorized_keys and paste it here]
+ cat id_rsa.pub
+ kops create secret --name abcd2.k8s.local sshpublickey admin -i ~/.ssh/id_rsa.pub
+kops get cluster
+kops update cluster abcd2.k8s.local --yes
+kops update cluster abcd2.k8s.local --yes
+kops rolling-update cluster --cloudonly [here we will get the details of nodes we created one will be the master and other two will be slave]] 
+kops validate cluster [ have to repeat this command atleast 3 to 5 times till its completion]
+kubectl cluster-info 
+kops get secrets kube --type secret -oplaintext 
+
+=============================================================================================================================================================
+
+DEPLOYING NGINX CONTAINER ON KUBERNETES
+
+
+kubectl get nodes   [to check the nodes 1 will be master node and 2 will be slave]
+kubectl create deployment nginx --image=nginx  [now we will create a deployment of nginx using the nginx image]
+kubectl get pods [ to check the pods]
+kubectl get deployments [ now we can see the state of our deployment]
+kubectl get services 
+kubectl expose deployment nginx --port=80 --type=LoadBalancer [ to create a service so that we can access it publicly]
+kubectl get services [to check the service it is created or not]
+kubectl get services -o wide [ to get external information about services]
+
+kubectl describe deployment nginx [ to see more detail of our deployment]0
+kubectl get pod
+kubectl describe pod [ame of the pod]
+kubectl get services [here copy the external ip]
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+
+
+
+
+
+
+
